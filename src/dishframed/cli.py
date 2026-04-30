@@ -50,6 +50,37 @@ def render_menu(
 
 
 @app.command()
+def parse_text(
+    text_file: Path = typer.Argument(..., help="OCR-style menu text file."),
+    title: str = typer.Option("Parsed Menu", "--title", help="Menu title."),
+    json_out: Path = typer.Option(
+        Path("./artifacts/parsed_menu.json"),
+        "--json-out",
+        help="Where to write normalized menu JSON.",
+    ),
+    output_dir: Path = typer.Option(
+        Path("./artifacts"),
+        "--output-dir",
+        help="Directory for rendered output.",
+    ),
+) -> None:
+    try:
+        raw_text = text_file.read_text(encoding="utf-8")
+    except FileNotFoundError as exc:
+        raise typer.BadParameter(f"Text file not found: {text_file}") from exc
+
+    pipeline = DishFramedPipeline()
+    menu = pipeline.parse_menu_text(raw_text, title=title)
+    json_out.parent.mkdir(parents=True, exist_ok=True)
+    json_out.write_text(menu.model_dump_json(indent=2), encoding="utf-8")
+    artifact = pipeline.render_menu(menu, output_dir)
+
+    typer.echo(f"Menu JSON: {json_out}")
+    typer.echo(f"Preview: {artifact.output_path}")
+    typer.echo(artifact.preview_text)
+
+
+@app.command()
 def plan() -> None:
     typer.echo("DishFramed MVP:")
     typer.echo("1. Extract menu structure from menu photos.")

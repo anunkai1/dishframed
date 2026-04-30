@@ -2,6 +2,8 @@
 
 DishFramed turns restaurant menu photos into a clean visual menu with representative dish imagery.
 
+Telegram is the intended primary user interface, but the core pipeline is being built so it can also run from a local CLI and later a small web/API surface.
+
 ## What It Is
 
 The intended Server3 flow is:
@@ -54,4 +56,10 @@ Render the included sample menu into a preview:
 
 ```bash
 dishframed render-menu examples/sample_menu.json
+```
+
+Parse OCR-style menu text into structured JSON and a preview:
+
+```bash
+dishframed parse-text examples/sample_menu_ocr.txt --title "Breakfast Demo"
 ```

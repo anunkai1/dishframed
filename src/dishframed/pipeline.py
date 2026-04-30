@@ -3,7 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Iterable, List, Sequence
 
-from .menu_parser import MenuExtractor, StubMenuExtractor
+from .menu_parser import MenuExtractor, StubMenuExtractor, parse_menu_text
 from .models import MenuDocument, RenderArtifact
 from .render import HtmlPreviewRenderer, MenuRenderer
 
@@ -38,3 +38,6 @@ class DishFramedPipeline:
 
     def render_menu(self, menu: MenuDocument, output_dir: str | Path) -> RenderArtifact:
         return self.renderer.render(menu, Path(output_dir).expanduser().resolve())
+
+    def parse_menu_text(self, text: str, *, title: str = "Parsed Menu") -> MenuDocument:
+        return parse_menu_text(text, title=title)

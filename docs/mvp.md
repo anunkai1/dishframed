@@ -30,6 +30,7 @@ Ship a Telegram-triggered workflow on Server3 that accepts a menu photo and retu
 - Make rendering deterministic from a structured menu document.
 - Cache dish images and normalized menu outputs.
 - Treat "exact real dish photo" as out of scope for v1.
+- Keep Telegram as the first-class delivery channel, but do not couple core parsing/rendering logic to Telegram transport.
 
 ## Suggested First Milestones
 
