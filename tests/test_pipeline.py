@@ -1,5 +1,6 @@
 from pathlib import Path
 
+from dishframed.models import MenuDocument, MenuItem, MenuSection
 from dishframed.pipeline import DishFramedPipeline, normalize_input_paths
 
 
@@ -29,4 +30,31 @@ def test_pipeline_writes_render_artifact(tmp_path: Path) -> None:
     artifact = pipeline.run([image], output_dir)
 
     assert artifact.output_path.exists()
-    assert artifact.output_path.name == "menu_preview.json"
+    assert artifact.output_path.name == "menu_preview.html"
+
+
+def test_pipeline_renders_structured_menu_document(tmp_path: Path) -> None:
+    output_dir = tmp_path / "out"
+    pipeline = DishFramedPipeline()
+    menu = MenuDocument(
+        title="Lunch Demo",
+        sections=[
+            MenuSection(
+                name="Mains",
+                items=[
+                    MenuItem(
+                        name="Chicken Katsu",
+                        price="18",
+                        description="Crisp cutlet with rice and curry.",
+                    )
+                ],
+            )
+        ],
+    )
+
+    artifact = pipeline.render_menu(menu, output_dir)
+
+    assert artifact.output_path.exists()
+    html = artifact.output_path.read_text(encoding="utf-8")
+    assert "Lunch Demo" in html
+    assert "Chicken Katsu" in html

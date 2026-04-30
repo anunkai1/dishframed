@@ -25,6 +25,7 @@ The first objective is a high-quality visual reconstruction that is useful, attr
 - Generate representative dish prompts
 - Render a framed menu layout
 - Return result through Telegram
+- Support local JSON-to-preview rendering for fast iteration
 
 ## Initial Repo Shape
 
@@ -49,3 +50,8 @@ dishframed --help
 pytest -q
 ```
 
+Render the included sample menu into a preview:
+
+```bash
+dishframed render-menu examples/sample_menu.json
+```

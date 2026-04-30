@@ -5,7 +5,7 @@ from typing import Iterable, List, Sequence
 
 from .menu_parser import MenuExtractor, StubMenuExtractor
 from .models import MenuDocument, RenderArtifact
-from .render import JsonPreviewRenderer, MenuRenderer
+from .render import HtmlPreviewRenderer, MenuRenderer
 
 
 def normalize_input_paths(paths: Iterable[str | Path]) -> List[Path]:
@@ -24,7 +24,7 @@ class DishFramedPipeline:
         renderer: MenuRenderer | None = None,
     ) -> None:
         self.extractor = extractor or StubMenuExtractor()
-        self.renderer = renderer or JsonPreviewRenderer()
+        self.renderer = renderer or HtmlPreviewRenderer()
 
     def build_menu(self, image_paths: Sequence[str | Path]) -> MenuDocument:
         normalized_paths = normalize_input_paths(image_paths)
@@ -36,3 +36,5 @@ class DishFramedPipeline:
         menu = self.build_menu(image_paths)
         return self.renderer.render(menu, Path(output_dir).expanduser().resolve())
 
+    def render_menu(self, menu: MenuDocument, output_dir: str | Path) -> RenderArtifact:
+        return self.renderer.render(menu, Path(output_dir).expanduser().resolve())

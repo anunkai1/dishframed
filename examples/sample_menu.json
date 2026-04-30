@@ -1,0 +1,49 @@
+{
+  "title": "Breakfast Signatures",
+  "restaurant_name": "DishFramed Demo Cafe",
+  "subtitle": "Structured sample menu rendered into a visual preview before OCR and Telegram wiring.",
+  "sections": [
+    {
+      "name": "Signatures",
+      "items": [
+        {
+          "name": "Kaya French Toast",
+          "price": "26",
+          "description": "Pandan-coconut jam, soy caramel, soft egg cream.",
+          "image_prompt": "Golden thick-cut French toast with kaya jam and glossy caramel in warm breakfast light."
+        },
+        {
+          "name": "Curry and Waffle",
+          "price": "20",
+          "description": "Tamarind fish curry, Japanese seabream, prata waffles, curry leaves.",
+          "image_prompt": "Crisp waffle paired with fragrant fish curry, plated in a refined brunch style."
+        },
+        {
+          "name": "Iberico Pork Dumplings",
+          "price": "20",
+          "description": "Soy, chili oil, black vinegar, coriander, garlic.",
+          "image_prompt": "Pan-seared dumplings with chili oil and herbs, close-up editorial food styling."
+        }
+      ]
+    },
+    {
+      "name": "Breakfast Classics",
+      "items": [
+        {
+          "name": "Open-Faced Monte Cristo Sandwich",
+          "price": "24",
+          "description": "Canadian-style smoked bacon, sunny side up egg, Gruyere, soy caramel."
+        },
+        {
+          "name": "Avocado Toast",
+          "price": "26",
+          "description": "Salmon cream cheese, watercress, poached egg, hollandaise, dill, chives."
+        }
+      ]
+    }
+  ],
+  "source_notes": [
+    "This sample is intentionally hand-structured.",
+    "Real OCR and menu extraction will replace this input stage."
+  ]
+}

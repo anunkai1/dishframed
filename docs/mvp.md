@@ -34,7 +34,7 @@ Ship a Telegram-triggered workflow on Server3 that accepts a menu photo and retu
 ## Suggested First Milestones
 
 ### Milestone 1
-- Local CLI accepts a prebuilt JSON menu and renders a framed mock output.
+- Local CLI accepts a prebuilt JSON menu and renders a framed HTML mock output.
 
 ### Milestone 2
 - Plug in real menu extraction from a menu photo.
@@ -44,4 +44,3 @@ Ship a Telegram-triggered workflow on Server3 that accepts a menu photo and retu
 
 ### Milestone 4
 - Attach Telegram workflow.
-

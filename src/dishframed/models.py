@@ -22,6 +22,7 @@ class MenuSection(BaseModel):
 class MenuDocument(BaseModel):
     title: str = "Menu"
     restaurant_name: Optional[str] = None
+    subtitle: Optional[str] = None
     sections: List[MenuSection] = Field(default_factory=list)
     source_notes: List[str] = Field(default_factory=list)
 
@@ -29,4 +30,3 @@ class MenuDocument(BaseModel):
 class RenderArtifact(BaseModel):
     output_path: Path
     preview_text: str
-
