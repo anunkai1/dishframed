@@ -4,6 +4,7 @@ __pycache__/
 .mypy_cache/
 dist/
 build/
+*.egg-info/
 *.pyc
 *.pyo
 *.pyd
@@ -12,4 +13,3 @@ build/
 .DS_Store
 tmp/
 artifacts/
-
