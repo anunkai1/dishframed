@@ -87,9 +87,30 @@ Optional extractor env:
 - `DISHFRAMED_OPENAI_MODEL=gpt-5.4`
 - `DISHFRAMED_OPENAI_REASONING_EFFORT=low`
 
+Optional image-generation env:
+
+- `DISHFRAMED_IMAGE_PROVIDER=auto|venice|openai|codex|none`
+- `DISHFRAMED_OPENAI_IMAGE_MODEL=gpt-image-1`
+- `DISHFRAMED_OPENAI_IMAGE_QUALITY=medium`
+- `DISHFRAMED_OPENAI_IMAGE_SIZE=1024x1024`
+- `DISHFRAMED_VENICE_IMAGE_MODEL=qwen-image`
+
+Notes:
+
+- `codex` is accepted as an alias for the OpenAI-backed image path so DishFramed can use the same OpenAI family as the extractor.
+- `auto` preserves the current behavior order: Venice first when `VENICE_API_KEY` is present, then OpenAI when `OPENAI_API_KEY` is present, otherwise no representative dish images are generated.
+
 If you explicitly want direct OpenAI API usage instead of shared Codex auth:
 
 ```bash
 export OPENAI_API_KEY=your_key_here
 dishframed frame --extractor openai --image path/to/menu.jpg
+```
+
+To force the OpenAI-backed image generator for representative dish photos:
+
+```bash
+export OPENAI_API_KEY=your_key_here
+export DISHFRAMED_IMAGE_PROVIDER=codex
+dishframed frame --extractor codex --image path/to/menu.jpg
 ```

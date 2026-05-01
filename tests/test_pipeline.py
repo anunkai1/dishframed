@@ -1,10 +1,11 @@
+import base64
 import subprocess
 from pathlib import Path
 
 from PIL import Image
 
 from dishframed.codex_extractor import CodexImageMenuExtractor
-from dishframed.image_generation import build_food_image_prompt
+from dishframed.image_generation import OpenAIImageGenerator, build_food_image_prompt, default_image_generator
 from dishframed.menu_parser import StubMenuExtractor, parse_menu_text
 from dishframed.models import MenuDocument, MenuItem, MenuSection
 from dishframed.openai_extractor import OpenAIImageMenuExtractor
@@ -160,6 +161,39 @@ def test_default_extractor_prefers_codex_when_available(monkeypatch) -> None:
     assert isinstance(extractor, CodexImageMenuExtractor)
 
 
+def test_default_image_generator_prefers_venice_in_auto_mode(monkeypatch) -> None:
+    monkeypatch.setenv("VENICE_API_KEY", "venice-key")
+    monkeypatch.setenv("OPENAI_API_KEY", "openai-key")
+    monkeypatch.delenv("DISHFRAMED_IMAGE_PROVIDER", raising=False)
+
+    generator = default_image_generator()
+
+    assert generator is not None
+    assert generator.__class__.__name__ == "VeniceImageGenerator"
+
+
+def test_default_image_generator_supports_codex_alias(monkeypatch) -> None:
+    monkeypatch.setenv("DISHFRAMED_IMAGE_PROVIDER", "codex")
+    monkeypatch.setenv("OPENAI_API_KEY", "openai-key")
+    monkeypatch.delenv("VENICE_API_KEY", raising=False)
+
+    generator = default_image_generator()
+
+    assert isinstance(generator, OpenAIImageGenerator)
+
+
+def test_default_image_generator_requires_openai_key_for_codex_alias(monkeypatch) -> None:
+    monkeypatch.setenv("DISHFRAMED_IMAGE_PROVIDER", "codex")
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+
+    try:
+        default_image_generator()
+    except RuntimeError as exc:
+        assert "OPENAI_API_KEY is missing" in str(exc)
+    else:
+        raise AssertionError("Expected RuntimeError when codex image provider has no OPENAI_API_KEY.")
+
+
 class _FakeParsedResponse:
     def __init__(self, parsed):
         self.output_parsed = parsed
@@ -178,6 +212,26 @@ class _FakeResponsesAPI:
 class _FakeOpenAIClient:
     def __init__(self, parsed):
         self.responses = _FakeResponsesAPI(parsed)
+
+
+class _FakeImagesResponse:
+    def __init__(self, image_b64: str):
+        self.data = [type("ImagePayload", (), {"b64_json": image_b64})()]
+
+
+class _FakeImagesAPI:
+    def __init__(self, image_b64: str):
+        self.image_b64 = image_b64
+        self.calls = []
+
+    def generate(self, **kwargs):
+        self.calls.append(kwargs)
+        return _FakeImagesResponse(self.image_b64)
+
+
+class _FakeOpenAIImageClient:
+    def __init__(self, image_b64: str):
+        self.images = _FakeImagesAPI(image_b64)
 
 
 def test_openai_extractor_maps_structured_output(tmp_path: Path) -> None:
@@ -246,6 +300,23 @@ def test_codex_extractor_maps_structured_output(tmp_path: Path, monkeypatch) -> 
     assert menu.sections[0].items[0].name == "Chicken Katsu"
     assert menu.sections[0].items[0].image_prompt == "Golden chicken katsu with Japanese curry"
     assert menu.source_notes[-1] == "Extracted with Codex model gpt-5.4."
+
+
+def test_openai_image_generator_writes_png(tmp_path: Path) -> None:
+    source = tmp_path / "source.png"
+    Image.new("RGB", (32, 32), (120, 90, 30)).save(source, format="PNG")
+    image_b64 = base64.b64encode(source.read_bytes()).decode("ascii")
+    client = _FakeOpenAIImageClient(image_b64)
+    generator = OpenAIImageGenerator(client=client, model="gpt-image-1")
+    output_path = tmp_path / "generated.png"
+
+    generated = generator.generate("Golden chicken katsu", output_path)
+
+    assert generated == output_path
+    assert output_path.exists()
+    assert output_path.read_bytes().startswith(b"\x89PNG")
+    assert client.images.calls[0]["model"] == "gpt-image-1"
+    assert client.images.calls[0]["response_format"] == "b64_json"
 
 
 def test_build_food_image_prompt_uses_menu_context() -> None:

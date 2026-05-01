@@ -14,6 +14,7 @@ from .models import MenuDocument, MenuItem
 
 DEFAULT_VENICE_BASE_URL = "https://api.venice.ai/api/v1"
 DEFAULT_VENICE_IMAGE_MODEL = "qwen-image"
+DEFAULT_OPENAI_IMAGE_MODEL = "gpt-image-1"
 DEFAULT_FEATURED_ITEM_LIMIT: int | None = None
 DEFAULT_IMAGE_CACHE_DIR = Path.home() / ".cache" / "dishframed" / "generated_items"
 SKIP_SECTION_TOKENS = {
@@ -43,16 +44,105 @@ class MenuImageGenerator(Protocol):
 
 
 def default_image_generator() -> Optional[MenuImageGenerator]:
-    api_key = os.getenv("VENICE_API_KEY", "").strip()
-    if not api_key:
+    provider = os.getenv("DISHFRAMED_IMAGE_PROVIDER", "auto").strip().lower()
+
+    venice_api_key = os.getenv("VENICE_API_KEY", "").strip()
+    openai_api_key = os.getenv("OPENAI_API_KEY", "").strip()
+
+    if provider == "none":
         return None
-    return VeniceImageGenerator(
-        api_key=api_key,
-        base_url=os.getenv("DISHFRAMED_VENICE_BASE_URL", DEFAULT_VENICE_BASE_URL).strip()
-        or DEFAULT_VENICE_BASE_URL,
-        model=os.getenv("DISHFRAMED_VENICE_IMAGE_MODEL", DEFAULT_VENICE_IMAGE_MODEL).strip()
-        or DEFAULT_VENICE_IMAGE_MODEL,
-    )
+    if provider in {"codex", "openai"}:
+        if not openai_api_key:
+            raise RuntimeError(
+                "DISHFRAMED_IMAGE_PROVIDER is set to an OpenAI-backed generator, but OPENAI_API_KEY is missing."
+            )
+        return OpenAIImageGenerator(api_key=openai_api_key)
+    if provider == "venice":
+        if not venice_api_key:
+            raise RuntimeError(
+                "DISHFRAMED_IMAGE_PROVIDER=venice requires VENICE_API_KEY to be set."
+            )
+        return VeniceImageGenerator(
+            api_key=venice_api_key,
+            base_url=os.getenv("DISHFRAMED_VENICE_BASE_URL", DEFAULT_VENICE_BASE_URL).strip()
+            or DEFAULT_VENICE_BASE_URL,
+            model=os.getenv("DISHFRAMED_VENICE_IMAGE_MODEL", DEFAULT_VENICE_IMAGE_MODEL).strip()
+            or DEFAULT_VENICE_IMAGE_MODEL,
+        )
+    if provider != "auto":
+        raise RuntimeError(
+            "Unsupported DISHFRAMED_IMAGE_PROVIDER. Expected one of: auto, venice, openai, codex, none."
+        )
+    if venice_api_key:
+        return VeniceImageGenerator(
+            api_key=venice_api_key,
+            base_url=os.getenv("DISHFRAMED_VENICE_BASE_URL", DEFAULT_VENICE_BASE_URL).strip()
+            or DEFAULT_VENICE_BASE_URL,
+            model=os.getenv("DISHFRAMED_VENICE_IMAGE_MODEL", DEFAULT_VENICE_IMAGE_MODEL).strip()
+            or DEFAULT_VENICE_IMAGE_MODEL,
+        )
+    if openai_api_key:
+        return OpenAIImageGenerator(api_key=openai_api_key)
+    return None
+
+
+class _OpenAIImagesClient(Protocol):
+    def generate(self, **kwargs): ...
+
+
+class _OpenAIClientLike(Protocol):
+    images: _OpenAIImagesClient
+
+
+class OpenAIImageGenerator:
+    def __init__(
+        self,
+        *,
+        api_key: str | None = None,
+        model: str | None = None,
+        quality: str | None = None,
+        size: str | None = None,
+        client: _OpenAIClientLike | None = None,
+    ) -> None:
+        self.api_key = api_key or os.getenv("OPENAI_API_KEY", "").strip()
+        self.model = model or os.getenv("DISHFRAMED_OPENAI_IMAGE_MODEL", DEFAULT_OPENAI_IMAGE_MODEL)
+        self.quality = quality or os.getenv("DISHFRAMED_OPENAI_IMAGE_QUALITY", "medium")
+        self.size = size or os.getenv("DISHFRAMED_OPENAI_IMAGE_SIZE", "1024x1024")
+        self._client = client
+
+    def _get_client(self) -> _OpenAIClientLike:
+        if self._client is not None:
+            return self._client
+        if not self.api_key:
+            raise RuntimeError("OPENAI_API_KEY is required for OpenAI image generation.")
+        try:
+            from openai import OpenAI
+        except ImportError as exc:
+            raise RuntimeError(
+                "OpenAI SDK is not installed. Run `pip install -e .[dev]` in the DishFramed repo."
+            ) from exc
+        self._client = OpenAI(api_key=self.api_key)
+        return self._client
+
+    def generate(self, prompt: str, output_path: Path) -> Path:
+        client = self._get_client()
+        response = client.images.generate(
+            model=self.model,
+            prompt=prompt,
+            quality=self.quality,
+            size=self.size,
+            output_format="png",
+            response_format="b64_json",
+        )
+        if not getattr(response, "data", None):
+            raise RuntimeError("OpenAI image generation returned no image data.")
+        image_payload = response.data[0]
+        image_b64 = getattr(image_payload, "b64_json", None)
+        if not image_b64:
+            raise RuntimeError("OpenAI image generation did not return base64 image data.")
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        output_path.write_bytes(base64.b64decode(image_b64))
+        return output_path
 
 
 class VeniceImageGenerator:
