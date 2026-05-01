@@ -13,7 +13,7 @@ from typing import Optional, Protocol
 from .models import MenuDocument, MenuItem
 
 DEFAULT_VENICE_BASE_URL = "https://api.venice.ai/api/v1"
-DEFAULT_VENICE_IMAGE_MODEL = "qwen-image"
+DEFAULT_VENICE_IMAGE_MODEL = "qwen-image-2-pro"
 DEFAULT_OPENAI_IMAGE_MODEL = "gpt-image-1"
 DEFAULT_FEATURED_ITEM_LIMIT: int | None = None
 DEFAULT_IMAGE_CACHE_DIR = Path.home() / ".cache" / "dishframed" / "generated_items"
