@@ -9,6 +9,8 @@ description = "Turn restaurant menu photos into a framed visual menu."
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
+  "openai>=1.109.0,<2",
+  "pillow>=11,<12",
   "pydantic>=2.8,<3",
   "typer>=0.12,<1",
 ]
@@ -29,4 +31,3 @@ where = ["src"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-

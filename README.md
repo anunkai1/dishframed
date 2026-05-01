@@ -52,14 +52,44 @@ dishframed --help
 pytest -q
 ```
 
-Render the included sample menu into a preview:
+Render the included sample menu into a preview poster:
 
 ```bash
 dishframed render-menu examples/sample_menu.json
 ```
 
+This writes:
+
+- `artifacts/menu_preview.svg`
+- `artifacts/menu_preview.html`
+
 Parse OCR-style menu text into structured JSON and a preview:
 
 ```bash
 dishframed parse-text examples/sample_menu_ocr.txt --title "Breakfast Demo"
+```
+
+On Architect/Server3, the default path now prefers the existing authenticated Codex CLI image-analysis path, so no separate OpenAI API key is required there.
+
+Try GPT-based extraction from real menu image(s) with Architect auth:
+
+```bash
+cd /home/architect/dishframed
+. .venv/bin/activate
+dishframed frame --extractor codex --image path/to/menu.jpg
+```
+
+Optional extractor env:
+
+- `DISHFRAMED_EXTRACTOR=codex|openai|stub|auto`
+- `DISHFRAMED_CODEX_MODEL=gpt-5.4`
+- `DISHFRAMED_CODEX_REASONING_EFFORT=low`
+- `DISHFRAMED_OPENAI_MODEL=gpt-5.4`
+- `DISHFRAMED_OPENAI_REASONING_EFFORT=low`
+
+If you explicitly want direct OpenAI API usage instead of shared Codex auth:
+
+```bash
+export OPENAI_API_KEY=your_key_here
+dishframed frame --extractor openai --image path/to/menu.jpg
 ```

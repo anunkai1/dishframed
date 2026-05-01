@@ -87,3 +87,29 @@ class StubMenuExtractor:
             sections=[],
             source_notes=notes,
         )
+
+
+def coerce_menu_document(menu: MenuDocument) -> MenuDocument:
+    normalized_sections: list[MenuSection] = []
+    for section in menu.sections:
+        items = [
+            MenuItem(
+                name=item.name.strip(),
+                price=item.price.strip() if item.price else None,
+                description=item.description.strip() if item.description else None,
+                image_prompt=item.image_prompt.strip() if item.image_prompt else None,
+            )
+            for item in section.items
+            if item.name.strip()
+        ]
+        if items:
+            normalized_sections.append(MenuSection(name=section.name.strip() or "Menu", items=items))
+
+    notes = [note.strip() for note in menu.source_notes if note.strip()]
+    return MenuDocument(
+        title=menu.title.strip() or "Extracted Menu",
+        restaurant_name=menu.restaurant_name.strip() if menu.restaurant_name else None,
+        subtitle=menu.subtitle.strip() if menu.subtitle else None,
+        sections=normalized_sections,
+        source_notes=notes,
+    )

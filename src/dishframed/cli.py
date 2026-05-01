@@ -1,12 +1,15 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import List, Optional
+from typing import List, Literal, Optional
 
 import typer
 from pydantic import ValidationError
 
+from .codex_extractor import CodexImageMenuExtractor
+from .menu_parser import StubMenuExtractor
 from .models import MenuDocument
+from .openai_extractor import OpenAIImageMenuExtractor
 from .pipeline import DishFramedPipeline
 
 app = typer.Typer(help="DishFramed development CLI.")
@@ -15,13 +18,26 @@ app = typer.Typer(help="DishFramed development CLI.")
 @app.command()
 def frame(
     image: List[Path] = typer.Option(..., "--image", "-i", help="Input menu image path."),
+    extractor: Literal["auto", "codex", "openai", "stub"] = typer.Option(
+        "auto",
+        "--extractor",
+        help="Extraction backend to use.",
+    ),
     output_dir: Path = typer.Option(
         Path("./artifacts"),
         "--output-dir",
         help="Directory for rendered output.",
     ),
 ) -> None:
-    pipeline = DishFramedPipeline()
+    extractor_impl = None
+    if extractor == "codex":
+        extractor_impl = CodexImageMenuExtractor()
+    elif extractor == "openai":
+        extractor_impl = OpenAIImageMenuExtractor()
+    elif extractor == "stub":
+        extractor_impl = StubMenuExtractor()
+
+    pipeline = DishFramedPipeline(extractor=extractor_impl)
     artifact = pipeline.run(image, output_dir)
     typer.echo(f"Output: {artifact.output_path}")
     typer.echo(artifact.preview_text)
